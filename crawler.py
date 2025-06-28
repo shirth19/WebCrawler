@@ -1,4 +1,4 @@
-from multiprocessing import Process
+from multiprocessing import Process, Array
 import sys
 import util
 
@@ -89,35 +89,36 @@ def get_job_description(job_postings, start, end, dest_dir, verbose=False):
 
 
 def read_command(argv):
-    """Parse command-line options using argparse."""
-    import argparse
+    """
+    Processes the command used to get job postings from the command line.
+    """
+    from optparse import OptionParser
+    usageStr = """
+    USAGE:      python3 crawler.py <options>
+    EXAMPLES:   
+        (1) python3 crawler.py -u "https://mastercard.wd1.myworkdayjobs.com/CorporateCareers" -d "./mastercard"
+            - retrieves all job postings for mastercard and saves them under the local directory 'mastercard'
+        (2) python3 crawler.py -u "https://symantec.wd1.myworkdayjobs.com/careers" -d "./symantec"
+            - retrieve all job posting for symantec
+        (3) python3 crawler.py -u "https://pvh.wd1.myworkdayjobs.com/PVH_Careers" -d "./pvh" -t 8 --verbose
+            - retrieve all job postings for PVH, using 8 parallel threads and a verbose output
+    """
+    parser = OptionParser(usageStr)
+    
+    parser.add_option('-u', '--url', type='string', dest='main_link', help=default('Job Posting URL'), default='https://mastercard.wd1.myworkdayjobs.com/CorporateCareers')
+    parser.add_option('-d', '--dest', type='string', dest='dest_dir', help=default('Destination Directory'), default='./test')
+    parser.add_option('-t', '--threads', type='int', dest='thread_count', help=default('Number of parallel threads'), default=4)
+    parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help=default('Verbose output to sdout'), default=False)
+    options, otherjunk = parser.parse_args(argv)
+    assert len(otherjunk) == 0, "Unrecognized options: " + str(otherjunk)
+    return vars(options)
 
-    parser = argparse.ArgumentParser(
-        description='Scrape job postings from a Workday job board.'
-    )
-    parser.add_argument(
-        '-u', '--url', dest='main_link',
-        default='https://mastercard.wd1.myworkdayjobs.com/CorporateCareers',
-        help='Job Posting URL'
-    )
-    parser.add_argument(
-        '-d', '--dest', dest='dest_dir',
-        default='./test',
-        help='Destination Directory'
-    )
-    parser.add_argument(
-        '-t', '--threads', dest='thread_count', type=int,
-        default=4,
-        help='Number of parallel threads'
-    )
-    parser.add_argument(
-        '-v', '--verbose', dest='verbose', action='store_true',
-        default=False,
-        help='Verbose output to sdout'
-    )
 
-    args = parser.parse_args(argv)
-    return vars(args)
+def default(str):
+    return str + ' [Default: %default]'
+
+def parse_comma_separated_args(option, opt, value, parser):
+    setattr(parser.values, option.dest, value.split(','))
 
 if __name__ == '__main__':
     options = read_command(sys.argv[1:])
