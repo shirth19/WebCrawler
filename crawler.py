@@ -24,6 +24,12 @@ def get_job_postings(main_link, dest_dir, thread_count, verbose):
     base_url = main_link.split('.com')[0] + '.com'
     pagination_end_point = base_url
     pagination_key = "Pagination"
+
+    if not end_points:
+        if verbose:
+            print("Unable to locate pagination endpoint; check the URL or site structure")
+        return
+
     for end_point in end_points:
         if end_point['type'] == pagination_key:
             pagination_end_point += end_point['uri'] + '/'
